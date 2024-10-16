@@ -22,17 +22,11 @@ public class TodoController {
     }
 
     @PostMapping
-    public ResponseEntity<Todo> createTodo(@RequestBody Todo todo) {
-        Todo createdTodo = todoService.createTodo(todo);
-        return new ResponseEntity<>(createdTodo, HttpStatus.CREATED);
-    }
-
-    @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<Todo> createTodoWithAttachments(
+    public ResponseEntity<Todo> createTodo(
             @RequestPart("todo") Todo todo,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
         try {
-            Todo createdTodo = todoService.createTodoWithAttachments(todo, files);
+            Todo createdTodo = todoService.createTodo(todo, files);
             return new ResponseEntity<>(createdTodo, HttpStatus.CREATED);
         } catch (IOException e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -65,11 +59,11 @@ public class TodoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTodo(@PathVariable Long id) {
-        return todoService.getTodoById(id)
-                .map(todo -> {
-                    todoService.deleteTodo(id);
-                    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
-                })
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        try {
+            todoService.deleteTodo(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

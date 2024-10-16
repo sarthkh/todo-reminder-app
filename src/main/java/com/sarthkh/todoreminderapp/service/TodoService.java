@@ -25,17 +25,9 @@ public class TodoService {
         this.attachmentService = attachmentService;
     }
 
-    public Todo createTodo(Todo todo) {
+    public Todo createTodo(Todo todo, List<MultipartFile> files) throws IOException {
         if (todo.getReminderDateTime() == null) {
 //            set reminder to next day morning if not provided
-            todo.setReminderDateTime(LocalDateTime.now().plusDays(1).withHour(9).withMinute(0).withSecond(0).withNano(0));
-        }
-
-        return todoRepository.save(todo);
-    }
-
-    public Todo createTodoWithAttachments(Todo todo, List<MultipartFile> files) throws IOException {
-        if (todo.getReminderDateTime() == null) {
             todo.setReminderDateTime(LocalDateTime.now().plusDays(1).withHour(9).withMinute(0).withSecond(0).withNano(0));
         }
 
@@ -43,7 +35,7 @@ public class TodoService {
 
         if (files != null && !files.isEmpty()) {
             for (MultipartFile file : files) {
-                Attachment attachment = attachmentService.saveAttachment(file);
+                Attachment attachment = attachmentService.saveAttachment(file, savedTodo);
                 savedTodo.addAttachment(attachment);
             }
         }
@@ -63,8 +55,15 @@ public class TodoService {
         return todoRepository.save(todo);
     }
 
-    public void deleteTodo(Long id) {
-        todoRepository.deleteById(id);
+    public void deleteTodo(Long id) throws IOException {
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Todo not found"));
+
+        for (Attachment attachment : todo.getAttachments()) {
+            attachmentService.deleteAttachment(attachment);
+        }
+
+        todoRepository.delete(todo);
     }
 
     public List<Todo> getTodosWithUpcomingReminders() {

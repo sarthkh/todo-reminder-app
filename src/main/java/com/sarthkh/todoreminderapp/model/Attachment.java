@@ -1,10 +1,13 @@
 package com.sarthkh.todoreminderapp.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
-@Data
+@Getter
+@Setter
 public class Attachment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,10 +19,10 @@ public class Attachment {
     @Column(nullable = false)
     private String fileType;
 
-    @Lob
     @Column(nullable = false)
-    private byte[] data;
+    private String filePath;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "todo_id", nullable = false)
     private Todo todo;
