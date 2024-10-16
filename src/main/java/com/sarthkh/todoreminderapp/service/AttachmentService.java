@@ -1,37 +1,33 @@
 package com.sarthkh.todoreminderapp.service;
 
 import com.sarthkh.todoreminderapp.model.Attachment;
+import com.sarthkh.todoreminderapp.model.Todo;
 import com.sarthkh.todoreminderapp.repository.AttachmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.UUID;
 
 @Service
 public class AttachmentService {
     private final AttachmentRepository attachmentRepository;
+    private final FileStorageService fileStorageService;
 
     @Autowired
-    public AttachmentService(AttachmentRepository attachmentRepository) {
+    public AttachmentService(AttachmentRepository attachmentRepository, FileStorageService fileStorageService) {
         this.attachmentRepository = attachmentRepository;
+        this.fileStorageService = fileStorageService;
     }
 
-    public Attachment saveAttachment(MultipartFile file) throws IOException {
-        String fileName = file.getOriginalFilename();
-//        create unique filename if missing
-        if (fileName == null || fileName.isEmpty()) {
-            fileName = "attachment_" + UUID.randomUUID();
-        } else {
-            fileName = StringUtils.cleanPath(fileName);
-        }
+    public Attachment saveAttachment(MultipartFile file, Todo todo) throws IOException {
+        String fileName = fileStorageService.storeFile(file);
 
         Attachment attachment = new Attachment();
-        attachment.setFileName(fileName);
+        attachment.setFileName(file.getOriginalFilename());
         attachment.setFileType(file.getContentType());
-        attachment.setData(file.getBytes());
+        attachment.setFilePath(fileName);
+        attachment.setTodo(todo);
 
         return attachmentRepository.save(attachment);
     }
@@ -39,5 +35,10 @@ public class AttachmentService {
     public Attachment getAttachment(Long id) {
         return attachmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Attachment not found"));
+    }
+
+    public void deleteAttachment(Attachment attachment) throws IOException {
+        fileStorageService.deleteFile(attachment.getFilePath());
+        attachmentRepository.delete(attachment);
     }
 }
