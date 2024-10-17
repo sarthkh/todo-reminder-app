@@ -21,11 +21,15 @@ public class AttachmentService {
     }
 
     public Attachment saveAttachment(MultipartFile file, Todo todo) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File must not be null or empty");
+        }
+
         String fileName = fileStorageService.storeFile(file);
 
         Attachment attachment = new Attachment();
-        attachment.setFileName(file.getOriginalFilename());
-        attachment.setFileType(file.getContentType());
+        attachment.setFileName(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown");
+        attachment.setFileType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
         attachment.setFilePath(fileName);
         attachment.setTodo(todo);
 
@@ -34,10 +38,14 @@ public class AttachmentService {
 
     public Attachment getAttachment(Long id) {
         return attachmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Attachment not found"));
+                .orElseThrow(() -> new RuntimeException("Attachment not found with id: " + id));
     }
 
     public void deleteAttachment(Attachment attachment) throws IOException {
+        if (attachment == null) {
+            throw new IllegalArgumentException("Attachment must not be null");
+        }
+
         fileStorageService.deleteFile(attachment.getFilePath());
         attachmentRepository.delete(attachment);
     }
