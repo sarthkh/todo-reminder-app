@@ -4,6 +4,7 @@ import com.sarthkh.todoreminderapp.model.Todo;
 import com.sarthkh.todoreminderapp.service.TodoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,7 +22,7 @@ public class TodoController {
         this.todoService = todoService;
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Todo> createTodo(
             @RequestPart("todo") Todo todo,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
@@ -46,15 +47,17 @@ public class TodoController {
         return new ResponseEntity<>(todos, HttpStatus.OK);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @RequestBody Todo todo) {
-        return todoService.getTodoById(id)
-                .map(existingTodo -> {
-                    todo.setId(id);
-                    Todo updatedTodo = todoService.updateTodo(todo);
-                    return new ResponseEntity<>(updatedTodo, HttpStatus.OK);
-                })
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Todo> updateTodo(
+            @PathVariable Long id,
+            @RequestPart("todo") Todo todo,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        try {
+            Todo updatedTodo = todoService.updateTodo(id, todo, files);
+            return new ResponseEntity<>(updatedTodo, HttpStatus.OK);
+        } catch (IOException e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @DeleteMapping("/{id}")

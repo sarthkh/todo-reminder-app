@@ -32,15 +32,7 @@ public class TodoService {
         }
 
         Todo savedTodo = todoRepository.save(todo);
-
-        if (files != null && !files.isEmpty()) {
-            for (MultipartFile file : files) {
-                Attachment attachment = attachmentService.saveAttachment(file, savedTodo);
-                savedTodo.addAttachment(attachment);
-            }
-        }
-
-        return todoRepository.save(savedTodo);
+        return addAttachmentsToTodo(savedTodo, files);
     }
 
     public Optional<Todo> getTodoById(Long id) {
@@ -51,13 +43,32 @@ public class TodoService {
         return todoRepository.findAll();
     }
 
-    public Todo updateTodo(Todo todo) {
+    public Todo updateTodo(Long id, Todo updatedTodo, List<MultipartFile> files) throws IOException {
+        Todo existingTodo = todoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Todo not found with id: " + id));
+
+        existingTodo.setTitle(updatedTodo.getTitle());
+        existingTodo.setDescription(updatedTodo.getDescription());
+        existingTodo.setReminderDateTime(updatedTodo.getReminderDateTime());
+
+        return addAttachmentsToTodo(existingTodo, files);
+    }
+
+    private Todo addAttachmentsToTodo(Todo todo, List<MultipartFile> files) throws IOException {
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    Attachment attachment = attachmentService.saveAttachment(file, todo);
+                    todo.addAttachment(attachment);
+                }
+            }
+        }
         return todoRepository.save(todo);
     }
 
     public void deleteTodo(Long id) throws IOException {
         Todo todo = todoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Todo not found"));
+                .orElseThrow(() -> new RuntimeException("Todo not found with id: " + id));
 
         for (Attachment attachment : todo.getAttachments()) {
             attachmentService.deleteAttachment(attachment);

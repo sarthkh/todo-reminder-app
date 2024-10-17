@@ -18,20 +18,44 @@ public class FileStorageService {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
+    //    store uploaded file and return its unique name
     public String storeFile(MultipartFile file) throws IOException {
-        String fileName = StringUtils.cleanPath(file.getOriginalFilename());
-        String fileExtension = StringUtils.getFilenameExtension(fileName);
-        String uniqueFileName = UUID.randomUUID().toString() + "." + fileExtension;
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File must not be null or empty");
+        }
 
-        Path targetLocation = Paths.get(uploadDir).toAbsolutePath().normalize().resolve(uniqueFileName);
-        Files.createDirectories(targetLocation.getParent());
-        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+        String fileName = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown");
+        String fileExtension = StringUtils.getFilenameExtension(fileName);
+        fileExtension = fileExtension != null ? fileExtension : "";
+        String uniqueFileName = UUID.randomUUID() + "." + fileExtension;
+
+//        set upload path, file location
+        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+        Path targetLocation = uploadPath.resolve(uniqueFileName);
+
+        try {
+            Files.createDirectories(uploadPath);
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ex) {
+            throw new IOException("Could not store file " + fileName + " try again.", ex);
+        }
 
         return uniqueFileName;
     }
 
     public void deleteFile(String fileName) throws IOException {
+        if (fileName == null || fileName.isEmpty()) {
+            throw new IllegalArgumentException("File name must not be null or empty");
+        }
+
         Path filePath = Paths.get(uploadDir).toAbsolutePath().normalize().resolve(fileName);
-        Files.deleteIfExists(filePath);
+        try {
+            boolean deleted = Files.deleteIfExists(filePath);
+            if (!deleted) {
+                throw new IOException("File " + fileName + " not found");
+            }
+        } catch (IOException ex) {
+            throw new IOException("Could not delete file " + fileName + " try again.", ex);
+        }
     }
 }
