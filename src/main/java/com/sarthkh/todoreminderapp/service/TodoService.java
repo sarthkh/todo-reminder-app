@@ -1,7 +1,7 @@
 package com.sarthkh.todoreminderapp.service;
 
-import com.sarthkh.todoreminderapp.model.Attachment;
 import com.sarthkh.todoreminderapp.model.Todo;
+import com.sarthkh.todoreminderapp.model.Attachment;
 import com.sarthkh.todoreminderapp.repository.TodoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +32,10 @@ public class TodoService {
             todo.setReminderDateTime(LocalDateTime.now().plusDays(1).withHour(9).withMinute(0).withSecond(0).withNano(0));
         }
 
+        if (todo.getPriority() == null) {
+            todo.setPriority(Todo.Priority.MEDIUM);
+        }
+
         Todo savedTodo = todoRepository.save(todo);
         return addAttachmentsToTodo(savedTodo, files);
     }
@@ -43,6 +48,10 @@ public class TodoService {
         return todoRepository.findAll();
     }
 
+    public List<Todo> getTodosByPriority(Todo.Priority priority) {
+        return todoRepository.findByPriority(priority);
+    }
+
     public Todo updateTodo(Long id, Todo updatedTodo, List<MultipartFile> files) throws IOException {
         Todo existingTodo = todoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Todo not found with id: " + id));
@@ -50,6 +59,7 @@ public class TodoService {
         existingTodo.setTitle(updatedTodo.getTitle());
         existingTodo.setDescription(updatedTodo.getDescription());
         existingTodo.setReminderDateTime(updatedTodo.getReminderDateTime());
+        existingTodo.setPriority(updatedTodo.getPriority());
 
         return addAttachmentsToTodo(existingTodo, files);
     }
@@ -77,7 +87,14 @@ public class TodoService {
         todoRepository.delete(todo);
     }
 
-    public List<Todo> getTodosWithUpcomingReminders(LocalDateTime start, LocalDateTime end) {
-        return todoRepository.findByReminderDateTimeBetween(start, end);
+    public List<Todo> getUpcomingTodos(LocalDateTime start, LocalDateTime end, Todo.Priority priority) {
+        return todoRepository.findActiveTodos(start, end, LocalDateTime.now(), priority);
+    }
+
+    public Todo snoozeTodo(Long id, Duration duration) {
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Todo not found with id: " + id));
+        todo.snooze(duration);
+        return todoRepository.save(todo);
     }
 }

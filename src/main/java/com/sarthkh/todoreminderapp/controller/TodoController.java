@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -47,6 +49,12 @@ public class TodoController {
         return new ResponseEntity<>(todos, HttpStatus.OK);
     }
 
+    @GetMapping("/priority/{priority}")
+    public ResponseEntity<List<Todo>> getTodosByPriority(@PathVariable Todo.Priority priority) {
+        List<Todo> todos = todoService.getTodosByPriority(priority);
+        return new ResponseEntity<>(todos, HttpStatus.OK);
+    }
+
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Todo> updateTodo(
             @PathVariable Long id,
@@ -68,5 +76,21 @@ public class TodoController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/upcoming")
+    public ResponseEntity<List<Todo>> getUpcomingTodos(
+            @RequestParam(required = false) Todo.Priority priority
+    ) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime end = now.plusHours(1);
+        List<Todo> todos = todoService.getUpcomingTodos(now, end, priority);
+        return new ResponseEntity<>(todos, HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/snooze")
+    public ResponseEntity<Todo> snoozeTodo(@PathVariable Long id, @RequestParam Duration duration) {
+        Todo snoozedTodo = todoService.snoozeTodo(id, duration);
+        return new ResponseEntity<>(snoozedTodo, HttpStatus.OK);
     }
 }

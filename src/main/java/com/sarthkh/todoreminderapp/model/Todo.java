@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,12 @@ public class Todo {
     @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Attachment> attachments = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Priority priority = Priority.MEDIUM;
+
+    private LocalDateTime snoozedUntil;
+
     public void addAttachment(Attachment attachment) {
         attachments.add(attachment);
         attachment.setTodo(this);
@@ -47,5 +54,17 @@ public class Todo {
     public void removeAttachment(Attachment attachment) {
         attachments.remove(attachment);
         attachment.setTodo(null);
+    }
+
+    public void snooze(Duration duration) {
+        this.snoozedUntil = LocalDateTime.now().plus(duration);
+    }
+
+    public boolean isSnoozeActive() {
+        return snoozedUntil != null && snoozedUntil.isAfter(LocalDateTime.now());
+    }
+
+    public enum Priority {
+        LOW, MEDIUM, HIGH
     }
 }
