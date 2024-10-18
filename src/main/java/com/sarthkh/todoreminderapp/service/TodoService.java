@@ -77,10 +77,7 @@ public class TodoService {
         todoRepository.delete(todo);
     }
 
-    public List<Todo> getTodosWithUpcomingReminders() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime oneHourFromNow = now.plusHours(1);
-
-        return todoRepository.findByReminderDateTimeBetween(now, oneHourFromNow);
+    public List<Todo> getTodosWithUpcomingReminders(LocalDateTime start, LocalDateTime end) {
+        return todoRepository.findByReminderDateTimeBetween(start, end);
     }
 }
