@@ -5,18 +5,25 @@ import com.sarthkh.todoreminderapp.service.TodoService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Component
 public class MainController {
     private final TodoService todoService;
+    private final ApplicationContext applicationContext;
     private final ObservableList<Todo> todos = FXCollections.observableArrayList();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -38,8 +45,9 @@ public class MainController {
     private TableColumn<Todo, Void> actionsColumn;
 
     @Autowired
-    public MainController(TodoService todoService) {
+    public MainController(TodoService todoService, ApplicationContext applicationContext) {
         this.todoService = todoService;
+        this.applicationContext = applicationContext;
     }
 
     @FXML
@@ -115,7 +123,29 @@ public class MainController {
 
     @FXML
     private void handleAddTodo() {
-//        todo
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/todo-dialog.fxml"));
+            loader.setControllerFactory(applicationContext::getBean);
+
+            Stage dialogStage = new Stage();
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(todoTable.getScene().getWindow());
+            dialogStage.setTitle("Add New Todo");
+
+            Scene scene = new Scene(loader.load());
+            dialogStage.setScene(scene);
+
+            TodoDialogController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+
+            dialogStage.showAndWait();
+
+            if (controller.isSaveClicked()) {
+                refreshTodos();
+            }
+        } catch (IOException e) {
+            showError("Error", "Could not load todo dialog: " + e.getMessage());
+        }
     }
 
     private void handleEditTodo(Todo todo) {

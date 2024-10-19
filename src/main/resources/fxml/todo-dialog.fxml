@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<GridPane xmlns="http://javafx.com/javafx"
+          xmlns:fx="http://javafx.com/fxml"
+          fx:controller="com.sarthkh.todoreminderapp.desktop.controller.TodoDialogController"
+          hgap="10" vgap="10">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <columnConstraints>
+        <ColumnConstraints hgrow="NEVER" minWidth="100"/>
+        <ColumnConstraints hgrow="ALWAYS" minWidth="200"/>
+        <ColumnConstraints hgrow="SOMETIMES" minWidth="100"/>
+    </columnConstraints>
+
+    <Label text="Title:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+    <TextField fx:id="titleField" GridPane.columnIndex="1" GridPane.rowIndex="0"
+               GridPane.columnSpan="2" GridPane.hgrow="ALWAYS"/>
+
+    <Label text="Description:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+    <TextArea fx:id="descriptionField" GridPane.columnIndex="1" GridPane.rowIndex="1"
+              GridPane.columnSpan="2" prefRowCount="3" wrapText="true"/>
+
+    <Label text="Priority:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+    <ComboBox fx:id="priorityCombo" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+    <Label text="Reminder:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+    <HBox spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="3" GridPane.columnSpan="2">
+        <DatePicker fx:id="reminderDate"/>
+        <ComboBox fx:id="reminderHour" prefWidth="70"/>
+        <Label text=":"/>
+        <ComboBox fx:id="reminderMinute" prefWidth="70"/>
+    </HBox>
+
+    <Label text="Email:" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+    <TextField fx:id="emailField" GridPane.columnIndex="1" GridPane.rowIndex="4"
+               GridPane.columnSpan="2"/>
+
+    <Label text="Attachments:" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+    <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="5" GridPane.columnSpan="2">
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Button text="Add Files" onAction="#handleAddFiles"/>
+            <Button text="Remove" onAction="#handleRemoveAttachment"/>
+            <Label fx:id="fileCountLabel" text="0 file(s) attached"/>
+        </HBox>
+        <ListView fx:id="attachmentList" prefHeight="100"/>
+    </VBox>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.columnIndex="1"
+          GridPane.rowIndex="6" GridPane.columnSpan="2">
+        <Button text="Cancel" onAction="#handleCancel" cancelButton="true"/>
+        <Button text="Save" onAction="#handleSave" defaultButton="true"/>
+    </HBox>
+
+</GridPane>

@@ -20,6 +20,8 @@ public class TodoService {
     private final TodoRepository todoRepository;
     private final AttachmentService attachmentService;
 
+    private static final Duration MAX_SNOOZE = Duration.ofHours(24);
+
     @Autowired
     public TodoService(TodoRepository todoRepository, AttachmentService attachmentService) {
         this.todoRepository = todoRepository;
@@ -94,7 +96,36 @@ public class TodoService {
     public Todo snoozeTodo(Long id, Duration duration) {
         Todo todo = todoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Todo not found with id: " + id));
-        todo.snooze(duration);
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime reminderTime = todo.getReminderDateTime();
+
+        if (duration.compareTo(MAX_SNOOZE) > 0) {
+            duration = MAX_SNOOZE;
+        }
+
+//        reschedule if past reminder time
+        if (now.plus(duration).isAfter(reminderTime)) {
+            todo.setReminderDateTime(now.plus(duration));
+            todo.setSnoozedUntil(null);  // clear snooze
+        } else {
+            todo.setSnoozedUntil(now.plus(duration));
+        }
+
         return todoRepository.save(todo);
+    }
+
+    public Todo createTestReminder() {
+        Todo testTodo = new Todo();
+        testTodo.setTitle("reminder test");
+        testTodo.setDescription("todo for testing email reminders");
+        testTodo.setUserEmail("sarthkh@yahoo.com");
+        testTodo.setPriority(Todo.Priority.HIGH);
+
+//        set reminder to 1min from now
+        LocalDateTime reminderTime = LocalDateTime.now().plusMinutes(1);
+        testTodo.setReminderDateTime(reminderTime);
+
+        return todoRepository.save(testTodo);
     }
 }

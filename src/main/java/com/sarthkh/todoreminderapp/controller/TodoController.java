@@ -12,7 +12,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/todos")
@@ -92,5 +94,22 @@ public class TodoController {
     public ResponseEntity<Todo> snoozeTodo(@PathVariable Long id, @RequestParam Duration duration) {
         Todo snoozedTodo = todoService.snoozeTodo(id, duration);
         return new ResponseEntity<>(snoozedTodo, HttpStatus.OK);
+    }
+
+    @PostMapping("/test-reminder")
+    public ResponseEntity<Map<String, Object>> createTestReminder() {
+        try {
+            Todo testTodo = todoService.createTestReminder();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Test reminder created successfully");
+            response.put("reminderTime", testTodo.getReminderDateTime());
+            response.put("emailTo", testTodo.getUserEmail());
+            response.put("todo", testTodo);
+
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
